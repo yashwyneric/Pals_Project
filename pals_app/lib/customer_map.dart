@@ -93,6 +93,18 @@ bottomSheet: Container(
             alpha: _markerOpacity, // The "Pulse" effect
             icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
             infoWindow: const InfoWindow(title: 'Pals Ice Cream - LIVE'),
+            late GoogleMapController mapController;
+
+void _onMapCreated(GoogleMapController controller) {
+  mapController = controller;
+}
+
+// Call this when the vendor moves or goes online
+void updateCamera(double lat, double lng) {
+  mapController.animateCamera(
+    CameraUpdate.newLatLng(LatLng(lat, lng)),
+  );
+}
           ),
         },
       ),
