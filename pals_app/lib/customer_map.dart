@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:async';
+import 'order_logic.dart'; // To make the Pay button work
 
 class CustomerMap extends StatefulWidget {
   const CustomerMap({super.key});
@@ -14,7 +15,8 @@ class _CustomerMapState extends State<CustomerMap> {
   double _markerOpacity = 1.0;
   Timer? _timer;
 
-  static const LatLng _center = LatLng(12.9592, 78.2714); // KGF Center
+  // KGF Center coordinates
+  static const LatLng _center = LatLng(12.9592, 78.2714); 
 
   @override
   void initState() {
@@ -33,6 +35,13 @@ class _CustomerMapState extends State<CustomerMap> {
     super.dispose();
   }
 
+  // Logic to move the camera when vendor moves
+  void updateCamera(double lat, double lng) {
+    mapController.animateCamera(
+      CameraUpdate.newLatLng(LatLng(lat, lng)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,48 +50,6 @@ class _CustomerMapState extends State<CustomerMap> {
         backgroundColor: Colors.orangeAccent,
       ),
       body: GoogleMap(
-        // Inside the Scaffold of CustomerMap, after the body:
-bottomSheet: Container(
-  height: 120,
-  decoration: BoxDecoration(
-    color: Colors.white,
-    boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
-    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-  ),
-  child: Padding(
-    padding: const EdgeInsets.all(20.0),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text("Pals Ice Cream", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-            Text("₹500.0 • 200m away", style: TextStyle(color: Colors.grey[600])),
-            Column(
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: [
-    const Text("Pals Ice Cream", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-    Text("₹500.0 • 200m away", style: TextStyle(color: Colors.grey[600])),
-    
-    // ADD THIS LINE HERE:
-    const Text("FSSAI: 23321004000XXX", style: TextStyle(fontSize: 10, color: Colors.blueGrey)),
-  ],
-),
-          ],
-        ),
-        ElevatedButton(
-          onPressed: () {
-             // This will trigger the UPI Link we built!
-             print("Opening GPay for order...");
-          },
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
-          child: const Text("PAY NOW"),
-        )
-      ],
-    ),
-  ),
-),
         onMapCreated: (controller) => mapController = controller,
         initialCameraPosition: const CameraPosition(target: _center, zoom: 15.0),
         myLocationEnabled: true,
@@ -93,20 +60,45 @@ bottomSheet: Container(
             alpha: _markerOpacity, // The "Pulse" effect
             icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
             infoWindow: const InfoWindow(title: 'Pals Ice Cream - LIVE'),
-            late GoogleMapController mapController;
-
-void _onMapCreated(GoogleMapController controller) {
-  mapController = controller;
-}
-
-// Call this when the vendor moves or goes online
-void updateCamera(double lat, double lng) {
-  mapController.animateCamera(
-    CameraUpdate.newLatLng(LatLng(lat, lng)),
-  );
-}
           ),
         },
+      ),
+      bottomSheet: Container(
+        height: 140, // Slightly taller for the FSSAI text
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("Pals Ice Cream", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                  Text("₹500.0 • 200m away", style: TextStyle(color: Colors.grey[600])),
+                  const SizedBox(height: 4),
+                  const Text("FSSAI: 23321004000XXX", style: TextStyle(fontSize: 10, color: Colors.blueGrey, fontWeight: FontWeight.bold)),
+                ],
+              ),
+              ElevatedButton(
+                onPressed: () {
+                   // This triggers the 2026 UPI Standard we built!
+                   PalsPayment.startPayment(amount: 500.0, orderId: "PALS-KGF-DOCS");
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange, 
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                ),
+                child: const Text("PAY NOW"),
+              )
+            ],
+          ),
+        ),
       ),
     );
   }

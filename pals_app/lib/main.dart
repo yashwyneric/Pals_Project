@@ -28,10 +28,35 @@ class VendorDashboard extends StatefulWidget {
 class _VendorDashboardState extends State<VendorDashboard> {
   bool isLive = false;
   bool hasOrder = false;
+  String _statusMessage = "OFFLINE";
 
-  // This mimics our finance.js logic
+  // Real-world Finance for KGF Market
   double orderAmount = 500.00;
-  double platformFee = 25.00; // 5%
+  
+  // Logic for the Accept Button
+  void _handleAccept() {
+    // 1. Calculate the 1% TCS (Tax Collected at Source) 
+    double tcs = orderAmount * 0.01;
+    double vendorNet = orderAmount - tcs;
+
+    setState(() {
+      hasOrder = false;
+      _statusMessage = "PREPARING (Net: ₹${vendorNet.toStringAsFixed(2)})";
+    });
+
+    // 2. Trigger the Real UPI Intent (GPay/PhonePe)
+    PalsPayment.startPayment(
+      amount: orderAmount, 
+      orderId: "PALS-KGF-2026-01"
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: Colors.green,
+        content: Text("Accepted! ₹${vendorNet.toStringAsFixed(2)} will be settled."),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,9 +65,7 @@ class _VendorDashboardState extends State<VendorDashboard> {
       appBar: AppBar(
         title: const Text("Pals Vendor Console"),
         centerTitle: true,
-        actions: [
-          if (isLive) const Icon(Icons.bolt, color: Colors.orange)
-        ],
+        backgroundColor: isLive ? Colors.green : Colors.deepOrange.shade100,
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -66,7 +89,7 @@ class _VendorDashboardState extends State<VendorDashboard> {
 
             const SizedBox(height: 10),
             Text(
-              isLive ? "ONLINE" : "OFFLINE",
+              isLive ? _statusMessage : "OFFLINE",
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
 
@@ -80,7 +103,7 @@ class _VendorDashboardState extends State<VendorDashboard> {
                 onChanged: (value) {
                   setState(() {
                     isLive = value;
-                    // Simulate an order coming in 2 seconds after going live
+                    _statusMessage = isLive ? "ONLINE" : "OFFLINE";
                     if (isLive) {
                       Future.delayed(const Duration(seconds: 2), () {
                         if (mounted) setState(() => hasOrder = true);
@@ -96,7 +119,7 @@ class _VendorDashboardState extends State<VendorDashboard> {
 
             const SizedBox(height: 40),
 
-            // 3. THE LIVE ORDER CARD (Only shows if Live and Order arrives)
+            // 3. THE LIVE ORDER CARD
             if (isLive && hasOrder) 
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -106,7 +129,8 @@ class _VendorDashboardState extends State<VendorDashboard> {
                   child: Column(
                     children: [
                       const ListTile(
-leading: const CircleAvatar(backgroundColor: Colors.blue, child: Icon(Icons.restaurant, color: Colors.white)),                        title: Text("NEW ORDER #2026", style: TextStyle(fontWeight: FontWeight.bold)),
+                        leading: CircleAvatar(backgroundColor: Colors.blue, child: Icon(Icons.restaurant, color: Colors.white)),
+                        title: Text("NEW ORDER #2026", style: TextStyle(fontWeight: FontWeight.bold)),
                         subtitle: Text("2x Ice Cream | 1x Hot Momos"),
                       ),
                       const Divider(),
@@ -117,12 +141,7 @@ leading: const CircleAvatar(backgroundColor: Colors.blue, child: Icon(Icons.rest
                           children: [
                             Text("Total: ₹$orderAmount", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                             ElevatedButton.icon(
-                              onPressed: () {
-                                setState(() => hasOrder = false);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text("Order Accepted! Preparing..."))
-                                );
-                              },
+                              onPressed: _handleAccept,
                               icon: const Icon(Icons.check),
                               label: const Text("ACCEPT"),
                               style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
@@ -135,8 +154,8 @@ leading: const CircleAvatar(backgroundColor: Colors.blue, child: Icon(Icons.rest
                 ),
               ),
             
-            if (isLive && !hasOrder)
-              const Text("Waiting for customers nearby...", style: TextStyle(color: Colors.grey)),
+            if (isLive && !hasOrder && _statusMessage == "ONLINE")
+              const Text("Waiting for customers in KGF...", style: TextStyle(color: Colors.grey)),
           ],
         ),
       ),
