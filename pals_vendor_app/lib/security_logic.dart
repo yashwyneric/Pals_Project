@@ -1,26 +1,20 @@
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:html' as html; // Essential for Web/PWA device ID
+import 'dart:html' as html;
 
 class PalsSecurity {
-  static const String _idKey = "pals_device_lock_id";
+  static const String _idKey = "pals_device_lock_v1";
 
-  /// Checks if this is the ONLY device allowed to open the app
   static Future<bool> isAuthorized() async {
     final prefs = await SharedPreferences.getInstance();
-    
-    // 1. Get a unique ID from the browser/phone storage
     String? lockedId = prefs.getString(_idKey);
     
-    // 2. Generate a "Session ID" for this specific device
-    String currentSessionId = html.window.navigator.userAgent;
+    // Generates a unique "Fingerprint" based on the device hardware/browser
+    String currentId = "${html.window.navigator.userAgent}-${html.window.navigator.platform}";
 
     if (lockedId == null) {
-      // FIRST LOGIN: Lock this device forever
-      await prefs.setString(_idKey, currentSessionId);
+      await prefs.setString(_idKey, currentId);
       return true;
     }
-
-    // 3. Compare: If it doesn't match, it's a second device. BLOCK IT.
-    return lockedId == currentSessionId;
+    return lockedId == currentId;
   }
 }
