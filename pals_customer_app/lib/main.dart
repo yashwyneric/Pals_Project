@@ -2,38 +2,105 @@ import 'package:flutter/material.dart';
 
 void main() => runApp(const MaterialApp(home: PalsCustomerApp(), debugShowCheckedModeBanner: false));
 
+// --- THE LOGIN STATION ---
+class LoginScreen extends StatelessWidget {
+  final VoidCallback onLoginSuccess;
+  const LoginScreen({super.key, required this.onLoginSuccess});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Padding(
+        padding: const EdgeInsets.all(30.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text("🫰", style: TextStyle(fontSize: 80)),
+            const SizedBox(height: 20),
+            const Text("WELCOME TO PALS", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 2)),
+            const SizedBox(height: 10),
+            const Text("Enter your mobile number to continue", style: TextStyle(color: Colors.grey, fontSize: 12)),
+            const SizedBox(height: 40),
+            TextField(
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: "Phone Number",
+                hintStyle: const TextStyle(color: Colors.white24),
+                filled: true,
+                fillColor: Colors.white.withOpacity(0.05),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                prefixIcon: const Icon(Icons.phone, color: Colors.orange),
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, minimumSize: const Size(double.infinity, 55), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
+              onPressed: onLoginSuccess,
+              child: const Text("SEND OTP", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// --- THE OFFLINE STATION ---
+class OfflineScreen extends StatelessWidget {
+  final VoidCallback onRetry;
+  const OfflineScreen({super.key, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.wifi_off_rounded, color: Colors.orange, size: 80),
+            const SizedBox(height: 20),
+            const Text("CONNECTION LOST", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 40, vertical: 10),
+              child: Text("It looks like you're offline. Check your data or Wi-Fi and try again.", textAlign: TextAlign.center, style: TextStyle(color: Colors.grey, fontSize: 14)),
+            ),
+            const SizedBox(height: 30),
+            TextButton(
+              onPressed: onRetry,
+              child: const Text("TRY AGAIN", style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, letterSpacing: 2)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 class PalsCustomerApp extends StatefulWidget {
   const PalsCustomerApp({super.key});
   @override
   State<PalsCustomerApp> createState() => _PalsCustomerAppState();
 }
 
-class _PalsCustomerAppState extends State<PalsCustomerApp> with SingleTickerProviderStateMixin {
+class _PalsCustomerAppState extends State<PalsCustomerApp> {
   bool _isMapReady = false;
-
-  @override
-  void initState() {
-    super.initState();
-    Future.delayed(const Duration(seconds: 4), () {
-      if (mounted) setState(() => _isMapReady = true);
-    });
-  }
+  bool _isLoggedIn = false;
+  bool _isOnline = true; // For testing, we start online
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          if (_isMapReady) const MapScreen(),
-          AnimatedOpacity(
-            opacity: _isMapReady ? 0.0 : 1.0,
-            duration: const Duration(milliseconds: 800),
-            child: const RadarSplash(),
-          ),
-        ],
-      ),
-    );
+    // 1. Check Connectivity first
+    if (!_isOnline) return OfflineScreen(onRetry: () => setState(() => _isOnline = true));
+
+    // 2. Show Splash/Radar during the "Puff"
+    if (!_isMapReady) return const RadarSplash();
+
+    // 3. Force Login before Map
+    if (!_isLoggedIn) return LoginScreen(onLoginSuccess: () => setState(() => _isLoggedIn = true));
+
+    // 4. Finally, the Map
+    return const MapScreen();
   }
 }
 
