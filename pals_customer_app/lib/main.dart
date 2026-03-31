@@ -14,7 +14,6 @@ class _PalsCustomerAppState extends State<PalsCustomerApp> with SingleTickerProv
   @override
   void initState() {
     super.initState();
-    // Simulate "Puff" and Radar search time
     Future.delayed(const Duration(seconds: 4), () {
       if (mounted) setState(() => _isMapReady = true);
     });
@@ -134,10 +133,7 @@ class MapScreen extends StatelessWidget {
       ),
       body: Stack(
         children: [
-          // MAP BACKGROUND
           Container(color: const Color(0xFF121212), child: const Center(child: Text("KGF MAP REFERENCE", style: TextStyle(color: Colors.white10)))),
-          
-          // TOP UI
           SafeArea(
             child: Column(
               children: [
@@ -162,65 +158,51 @@ class MapScreen extends StatelessWidget {
               ],
             ),
           ),
-
-         // --- THE NEW UTILITY CLUSTER (Bottom-Left) ---
-        Positioned(
-          bottom: 30,
-          left: 20,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // 1. FILTER (Top of the Recenter)
-              GestureDetector(
-                onTap: () => print("Filter Tapped"),
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.6),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.orange.withOpacity(0.5)),
+          Positioned(
+            bottom: 30,
+            left: 20,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                GestureDetector(
+                  onTap: () {},
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(color: Colors.black.withOpacity(0.6), shape: BoxShape.circle, border: Border.all(color: Colors.orange.withOpacity(0.5))),
+                    child: const Icon(Icons.tune_rounded, color: Colors.orange, size: 28),
                   ),
-                  child: const Icon(Icons.tune_rounded, color: Colors.orange, size: 28),
                 ),
-              ),
-              const SizedBox(height: 15), // Space between Filter and Recenter
-              
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  // 2. RECENTER BUTTON (The Anchor)
-                  GestureDetector(
-                    onTap: () => print("Recenter Tapped"),
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: const BoxDecoration(
-                        color: Colors.orange,
-                        shape: BoxShape.circle,
-                        boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10)],
+                const SizedBox(height: 15),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    GestureDetector(
+                      onTap: () {},
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: const BoxDecoration(color: Colors.orange, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10)]),
+                        child: const Icon(Icons.my_location, color: Colors.black, size: 28),
                       ),
-                      child: const Icon(Icons.my_location, color: Colors.black, size: 28),
                     ),
-                  ),
-                  const SizedBox(width: 15), // Space between Recenter and Fav
-                  
-                  // 3. FAVORITE (To the right of Recenter)
-                  GestureDetector(
-                    onTap: () => print("Finger Heart Tapped"),
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white10),
+                    const SizedBox(width: 15),
+                    GestureDetector(
+                      onTap: () {},
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(color: Colors.black.withOpacity(0.6), shape: BoxShape.circle, border: Border.all(color: Colors.white10)),
+                        child: const Text("🫰", style: TextStyle(fontSize: 24)),
                       ),
-                      child: const Text("🫰", style: TextStyle(fontSize: 24)),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
+      ),
+    );
+  }
 
   Widget _drawerItem(IconData icon, String title, String? trailing) {
     return ListTile(
