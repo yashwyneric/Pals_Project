@@ -77,6 +77,7 @@ class OfflineScreen extends StatelessWidget {
     );
   }
 }
+
 class PalsCustomerApp extends StatefulWidget {
   const PalsCustomerApp({super.key});
   @override
@@ -86,20 +87,22 @@ class PalsCustomerApp extends StatefulWidget {
 class _PalsCustomerAppState extends State<PalsCustomerApp> {
   bool _isMapReady = false;
   bool _isLoggedIn = false;
-  bool _isOnline = true; // For testing, we start online
+  bool _isOnline = true; 
+
+  @override
+  void initState() {
+    super.initState();
+    // THE PUFF TIMER: Ensures the radar searches for 4 seconds
+    Future.delayed(const Duration(seconds: 4), () {
+      if (mounted) setState(() => _isMapReady = true);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    // 1. Check Connectivity first
     if (!_isOnline) return OfflineScreen(onRetry: () => setState(() => _isOnline = true));
-
-    // 2. Show Splash/Radar during the "Puff"
     if (!_isMapReady) return const RadarSplash();
-
-    // 3. Force Login before Map
     if (!_isLoggedIn) return LoginScreen(onLoginSuccess: () => setState(() => _isLoggedIn = true));
-
-    // 4. Finally, the Map
     return const MapScreen();
   }
 }
@@ -124,24 +127,27 @@ class _RadarSplashState extends State<RadarSplash> with SingleTickerProviderStat
   }
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          ScaleTransition(
-            scale: Tween(begin: 0.8, end: 1.2).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut)),
-            child: FadeTransition(
-              opacity: Tween(begin: 1.0, end: 0.0).animate(_controller),
-              child: Container(
-                width: 120, height: 120,
-                decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.orange, width: 2)),
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ScaleTransition(
+              scale: Tween(begin: 0.8, end: 1.2).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut)),
+              child: FadeTransition(
+                opacity: Tween(begin: 1.0, end: 0.0).animate(_controller),
+                child: Container(
+                  width: 120, height: 120,
+                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.orange, width: 2)),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 20),
-          const Text("PALS", style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 6)),
-          const Text("SEARCHING KGF...", style: TextStyle(color: Colors.grey, fontSize: 10, letterSpacing: 2)),
-        ],
+            const SizedBox(height: 20),
+            const Text("PALS", style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 6)),
+            const Text("SEARCHING KGF...", style: TextStyle(color: Colors.grey, fontSize: 10, letterSpacing: 2)),
+          ],
+        ),
       ),
     );
   }
@@ -161,18 +167,14 @@ class MapScreen extends StatelessWidget {
         backgroundColor: const Color(0xFF1A1A1A),
         child: Column(
           children: [
-            UserAccountsDrawerHeader(
-              decoration: const BoxDecoration(color: Colors.black),
-              currentAccountPicture: const CircleAvatar(
+            const UserAccountsDrawerHeader(
+              decoration: BoxDecoration(color: Colors.black),
+              currentAccountPicture: CircleAvatar(
                 backgroundColor: Colors.orange,
                 child: Text("🫰", style: TextStyle(fontSize: 30)),
               ),
-              accountName: const Text("Pals Member", style: TextStyle(fontWeight: FontWeight.bold)),
-              accountEmail: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(color: Colors.orange.withOpacity(0.2), borderRadius: BorderRadius.circular(10)),
-                child: const Text("GOLD STATUS", style: TextStyle(color: Colors.orange, fontSize: 10)),
-              ),
+              accountName: Text("Pals Member", style: TextStyle(fontWeight: FontWeight.bold)),
+              accountEmail: Text("GOLD STATUS", style: TextStyle(color: Colors.orange, fontSize: 10)),
             ),
             const Padding(
               padding: EdgeInsets.all(16.0),
@@ -279,4 +281,4 @@ class MapScreen extends StatelessWidget {
       onTap: () {},
     );
   }
-}
+} // MapScreen ends here properly.
