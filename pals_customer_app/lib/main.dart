@@ -2,10 +2,56 @@ import 'package:flutter/material.dart';
 
 void main() => runApp(const MaterialApp(home: PalsCustomerApp(), debugShowCheckedModeBanner: false));
 
-// --- THE LOGIN STATION ---
+class PalsCustomerApp extends StatefulWidget {
+  const PalsCustomerApp({super.key});
+  @override
+  State<PalsCustomerApp> createState() => _PalsCustomerAppState();
+}
+
+class _PalsCustomerAppState extends State<PalsCustomerApp> {
+  bool _isMapReady = false;
+  bool _isLoggedIn = false;
+  bool _otpSent = false;
+  bool _isOnline = true; 
+
+  @override
+  void initState() {
+    super.initState();
+    // Simulate initial loading/searching time (The Puff)
+    Future.delayed(const Duration(seconds: 4), () {
+      if (mounted) setState(() => _isMapReady = true);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // 1. Connectivity Guard
+    if (!_isOnline) return OfflineScreen(onRetry: () => setState(() => _isOnline = true));
+
+    // 2. The Radar Splash
+    if (!_isMapReady) return const RadarSplash();
+
+    // 3. Login Flow (Login -> OTP -> Map)
+    if (!_isLoggedIn) {
+      if (!_otpSent) {
+        return LoginScreen(onSendOTP: () => setState(() => _otpSent = true));
+      } else {
+        return OTPScreen(
+          onVerify: () => setState(() => _isLoggedIn = true),
+          onBack: () => setState(() => _otpSent = false),
+        );
+      }
+    }
+
+    // 4. The Map Screen
+    return const MapScreen();
+  }
+}
+
+// --- LOGIN SCREEN ---
 class LoginScreen extends StatelessWidget {
-  final VoidCallback onLoginSuccess;
-  const LoginScreen({super.key, required this.onLoginSuccess});
+  final VoidCallback onSendOTP;
+  const LoginScreen({super.key, required this.onSendOTP});
 
   @override
   Widget build(BuildContext context) {
@@ -19,10 +65,9 @@ class LoginScreen extends StatelessWidget {
             const Text("🫰", style: TextStyle(fontSize: 80)),
             const SizedBox(height: 20),
             const Text("WELCOME TO PALS", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 2)),
-            const SizedBox(height: 10),
-            const Text("Enter your mobile number to continue", style: TextStyle(color: Colors.grey, fontSize: 12)),
             const SizedBox(height: 40),
             TextField(
+              keyboardType: TextInputType.phone,
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 hintText: "Phone Number",
@@ -36,7 +81,7 @@ class LoginScreen extends StatelessWidget {
             const SizedBox(height: 20),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, minimumSize: const Size(double.infinity, 55), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
-              onPressed: onLoginSuccess,
+              onPressed: onSendOTP,
               child: const Text("SEND OTP", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
             ),
           ],
@@ -46,11 +91,52 @@ class LoginScreen extends StatelessWidget {
   }
 }
 
-// --- THE OFFLINE STATION ---
+// --- OTP SCREEN ---
+class OTPScreen extends StatelessWidget {
+  final VoidCallback onVerify;
+  final VoidCallback onBack;
+  const OTPScreen({super.key, required this.onVerify, required this.onBack});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0, leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: onBack)),
+      body: Padding(
+        padding: const EdgeInsets.all(30.0),
+        child: Column(
+          children: [
+            const Text("Verification Code", style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
+            const Text("Enter the 4-digit code sent to your mobile", style: TextStyle(color: Colors.grey, fontSize: 13)),
+            const SizedBox(height: 40),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: List.generate(4, (index) => _otpBox()),
+            ),
+            const SizedBox(height: 40),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, minimumSize: const Size(double.infinity, 55), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
+              onPressed: onVerify,
+              child: const Text("VERIFY & CONTINUE", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _otpBox() => Container(
+    width: 60, height: 60,
+    decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white10)),
+    child: const Center(child: TextField(textAlign: TextAlign.center, keyboardType: TextInputType.number, style: TextStyle(color: Colors.orange, fontSize: 24, fontWeight: FontWeight.bold), decoration: InputDecoration(border: InputBorder.none))),
+  );
+}
+
+// --- OFFLINE SCREEN ---
 class OfflineScreen extends StatelessWidget {
   final VoidCallback onRetry;
   const OfflineScreen({super.key, required this.onRetry});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -60,17 +146,8 @@ class OfflineScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.wifi_off_rounded, color: Colors.orange, size: 80),
-            const SizedBox(height: 20),
             const Text("CONNECTION LOST", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 40, vertical: 10),
-              child: Text("It looks like you're offline. Check your data or Wi-Fi and try again.", textAlign: TextAlign.center, style: TextStyle(color: Colors.grey, fontSize: 14)),
-            ),
-            const SizedBox(height: 30),
-            TextButton(
-              onPressed: onRetry,
-              child: const Text("TRY AGAIN", style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, letterSpacing: 2)),
-            ),
+            TextButton(onPressed: onRetry, child: const Text("TRY AGAIN", style: TextStyle(color: Colors.orange))),
           ],
         ),
       ),
@@ -78,35 +155,7 @@ class OfflineScreen extends StatelessWidget {
   }
 }
 
-class PalsCustomerApp extends StatefulWidget {
-  const PalsCustomerApp({super.key});
-  @override
-  State<PalsCustomerApp> createState() => _PalsCustomerAppState();
-}
-
-class _PalsCustomerAppState extends State<PalsCustomerApp> {
-  bool _isMapReady = false;
-  bool _isLoggedIn = false;
-  bool _isOnline = true; 
-
-  @override
-  void initState() {
-    super.initState();
-    // THE PUFF TIMER: Ensures the radar searches for 4 seconds
-    Future.delayed(const Duration(seconds: 4), () {
-      if (mounted) setState(() => _isMapReady = true);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (!_isOnline) return OfflineScreen(onRetry: () => setState(() => _isOnline = true));
-    if (!_isMapReady) return const RadarSplash();
-    if (!_isLoggedIn) return LoginScreen(onLoginSuccess: () => setState(() => _isLoggedIn = true));
-    return const MapScreen();
-  }
-}
-
+// --- RADAR SPLASH ---
 class RadarSplash extends StatefulWidget {
   const RadarSplash({super.key});
   @override
@@ -121,10 +170,7 @@ class _RadarSplashState extends State<RadarSplash> with SingleTickerProviderStat
     _controller = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat();
   }
   @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  void dispose() { _controller.dispose(); super.dispose(); }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -137,10 +183,7 @@ class _RadarSplashState extends State<RadarSplash> with SingleTickerProviderStat
               scale: Tween(begin: 0.8, end: 1.2).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut)),
               child: FadeTransition(
                 opacity: Tween(begin: 1.0, end: 0.0).animate(_controller),
-                child: Container(
-                  width: 120, height: 120,
-                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.orange, width: 2)),
-                ),
+                child: Container(width: 120, height: 120, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.orange, width: 2))),
               ),
             ),
             const SizedBox(height: 20),
@@ -153,56 +196,20 @@ class _RadarSplashState extends State<RadarSplash> with SingleTickerProviderStat
   }
 }
 
+// --- MAP SCREEN ---
 class MapScreen extends StatelessWidget {
   const MapScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
-
     return Scaffold(
       key: scaffoldKey,
       backgroundColor: Colors.black,
-      drawer: Drawer(
-        backgroundColor: const Color(0xFF1A1A1A),
-        child: Column(
-          children: [
-            const UserAccountsDrawerHeader(
-              decoration: BoxDecoration(color: Colors.black),
-              currentAccountPicture: CircleAvatar(
-                backgroundColor: Colors.orange,
-                child: Text("🫰", style: TextStyle(fontSize: 30)),
-              ),
-              accountName: Text("Pals Member", style: TextStyle(fontWeight: FontWeight.bold)),
-              accountEmail: Text("GOLD STATUS", style: TextStyle(color: Colors.orange, fontSize: 10)),
-            ),
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Align(alignment: Alignment.centerLeft, child: Text("PALS CLUB", style: TextStyle(color: Colors.grey, fontSize: 12, letterSpacing: 2))),
-            ),
-            _drawerItem(Icons.card_membership, "Membership Status", "Gold Tier"),
-            _drawerItem(Icons.confirmation_number_outlined, "My Coupons", "4 Active"),
-            _drawerItem(Icons.stars_rounded, "Reward Points", "1,250 pts"),
-            const Divider(color: Colors.white10),
-            _drawerItem(Icons.history, "My Orders", null),
-            _drawerItem(Icons.favorite_border, "Saved Carts", null),
-            const Spacer(),
-            Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, minimumSize: const Size(double.infinity, 50)),
-                onPressed: () {},
-                child: const Text("BECOME A VENDOR", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-              ),
-            ),
-            const Text("v1.0.0 - KGF Edition", style: TextStyle(color: Colors.white24, fontSize: 10)),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
+      drawer: _buildDrawer(),
       body: Stack(
         children: [
-          Container(color: const Color(0xFF121212), child: const Center(child: Text("KGF MAP REFERENCE", style: TextStyle(color: Colors.white10)))),
+          const Center(child: Text("KGF MAP REFERENCE", style: TextStyle(color: Colors.white10))),
           SafeArea(
             child: Column(
               children: [
@@ -213,7 +220,7 @@ class MapScreen extends StatelessWidget {
                     children: [
                       IconButton(icon: const Icon(Icons.menu, color: Colors.white), onPressed: () => scaffoldKey.currentState?.openDrawer()),
                       const Text("PALS", style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 20)),
-                      IconButton(icon: const Icon(Icons.more_vert, color: Colors.white), onPressed: () {}),
+                      const SizedBox(width: 48),
                     ],
                   ),
                 ),
@@ -221,7 +228,7 @@ class MapScreen extends StatelessWidget {
                 ElevatedButton.icon(
                   onPressed: () {},
                   icon: const Icon(Icons.format_list_bulleted, size: 18),
-                  label: const Text("VIEW AS LIST", style: TextStyle(fontSize: 12)),
+                  label: const Text("VIEW AS LIST"),
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.white.withOpacity(0.1), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
                 ),
               ],
@@ -231,38 +238,14 @@ class MapScreen extends StatelessWidget {
             bottom: 30,
             left: 20,
             child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                GestureDetector(
-                  onTap: () {},
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(color: Colors.black.withOpacity(0.6), shape: BoxShape.circle, border: Border.all(color: Colors.orange.withOpacity(0.5))),
-                    child: const Icon(Icons.tune_rounded, color: Colors.orange, size: 28),
-                  ),
-                ),
+                _clusterBtn(Icons.tune_rounded, false),
                 const SizedBox(height: 15),
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    GestureDetector(
-                      onTap: () {},
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: const BoxDecoration(color: Colors.orange, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10)]),
-                        child: const Icon(Icons.my_location, color: Colors.black, size: 28),
-                      ),
-                    ),
+                    _clusterBtn(Icons.my_location, true),
                     const SizedBox(width: 15),
-                    GestureDetector(
-                      onTap: () {},
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(color: Colors.black.withOpacity(0.6), shape: BoxShape.circle, border: Border.all(color: Colors.white10)),
-                        child: const Text("🫰", style: TextStyle(fontSize: 24)),
-                      ),
-                    ),
+                    _clusterBtnText("🫰"),
                   ],
                 ),
               ],
@@ -273,12 +256,36 @@ class MapScreen extends StatelessWidget {
     );
   }
 
-  Widget _drawerItem(IconData icon, String title, String? trailing) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.white70, size: 20),
-      title: Text(title, style: const TextStyle(color: Colors.white, fontSize: 14)),
-      trailing: trailing != null ? Text(trailing, style: const TextStyle(color: Colors.orange, fontSize: 12)) : null,
-      onTap: () {},
+  Widget _buildDrawer() {
+    return Drawer(
+      backgroundColor: const Color(0xFF1A1A1A),
+      child: Column(
+        children: [
+          const UserAccountsDrawerHeader(
+            decoration: BoxDecoration(color: Colors.black),
+            currentAccountPicture: CircleAvatar(backgroundColor: Colors.orange, child: Text("🫰")),
+            accountName: Text("Pals Member"),
+            accountEmail: Text("GOLD STATUS", style: TextStyle(color: Colors.orange, fontSize: 10)),
+          ),
+          ListTile(leading: const Icon(Icons.card_membership, color: Colors.white70), title: const Text("Membership", style: TextStyle(color: Colors.white)), onTap: () {}),
+          ListTile(leading: const Icon(Icons.confirmation_number_outlined, color: Colors.white70), title: const Text("Coupons", style: TextStyle(color: Colors.white)), onTap: () {}),
+          const Spacer(),
+          const Text("v1.0.0 - KGF Edition", style: TextStyle(color: Colors.white24, fontSize: 10)),
+          const SizedBox(height: 20),
+        ],
+      ),
     );
   }
-} // MapScreen ends here properly.
+
+  Widget _clusterBtn(IconData icon, bool orange) => Container(
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(color: orange ? Colors.orange : Colors.black.withOpacity(0.6), shape: BoxShape.circle, border: orange ? null : Border.all(color: Colors.white10)),
+    child: Icon(icon, color: orange ? Colors.black : Colors.orange),
+  );
+
+  Widget _clusterBtnText(String text) => Container(
+    padding: const EdgeInsets.all(10),
+    decoration: BoxDecoration(color: Colors.black.withOpacity(0.6), shape: BoxShape.circle, border: Border.all(color: Colors.white10)),
+    child: Text(text, style: const TextStyle(fontSize: 24)),
+  );
+}
