@@ -14,7 +14,7 @@ class _PalsCustomerAppState extends State<PalsCustomerApp> with SingleTickerProv
   @override
   void initState() {
     super.initState();
-    // Simulate "Puff" and Radar search time before showing the Map
+    // Simulate "Puff" and Radar search time
     Future.delayed(const Duration(seconds: 4), () {
       if (mounted) setState(() => _isMapReady = true);
     });
@@ -26,10 +26,7 @@ class _PalsCustomerAppState extends State<PalsCustomerApp> with SingleTickerProv
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // 1. THE FINAL MAP UI (Visible when ready)
           if (_isMapReady) const MapScreen(),
-
-          // 2. THE RADAR & SPLASH LAYER (Puffs away when map is ready)
           AnimatedOpacity(
             opacity: _isMapReady ? 0.0 : 1.0,
             duration: const Duration(milliseconds: 800),
@@ -41,7 +38,6 @@ class _PalsCustomerAppState extends State<PalsCustomerApp> with SingleTickerProv
   }
 }
 
-// --- THE RADAR / SPLASH STATION ---
 class RadarSplash extends StatefulWidget {
   const RadarSplash({super.key});
   @override
@@ -50,19 +46,16 @@ class RadarSplash extends StatefulWidget {
 
 class _RadarSplashState extends State<RadarSplash> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat();
   }
-
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -81,7 +74,6 @@ class _RadarSplashState extends State<RadarSplash> with SingleTickerProviderStat
           ),
           const SizedBox(height: 20),
           const Text("PALS", style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 6)),
-          const SizedBox(height: 10),
           const Text("SEARCHING KGF...", style: TextStyle(color: Colors.grey, fontSize: 10, letterSpacing: 2)),
         ],
       ),
@@ -89,51 +81,153 @@ class _RadarSplashState extends State<RadarSplash> with SingleTickerProviderStat
   }
 }
 
-// --- THE MAP STATION ---
 class MapScreen extends StatelessWidget {
   const MapScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // Map Placeholder
-        Container(color: const Color(0xFF121212), child: const Center(child: Text("MAP VIEW", style: TextStyle(color: Colors.white24)))),
+    final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
-        // TOP UI: Hamburger, Logo, Dots, and List View Button
-        SafeArea(
+    return Scaffold(
+      key: scaffoldKey,
+      backgroundColor: Colors.black,
+      drawer: Drawer(
+        backgroundColor: const Color(0xFF1A1A1A),
+        child: Column(
+          children: [
+            UserAccountsDrawerHeader(
+              decoration: const BoxDecoration(color: Colors.black),
+              currentAccountPicture: const CircleAvatar(
+                backgroundColor: Colors.orange,
+                child: Text("🫰", style: TextStyle(fontSize: 30)),
+              ),
+              accountName: const Text("Pals Member", style: TextStyle(fontWeight: FontWeight.bold)),
+              accountEmail: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(color: Colors.orange.withOpacity(0.2), borderRadius: BorderRadius.circular(10)),
+                child: const Text("GOLD STATUS", style: TextStyle(color: Colors.orange, fontSize: 10)),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Align(alignment: Alignment.centerLeft, child: Text("PALS CLUB", style: TextStyle(color: Colors.grey, fontSize: 12, letterSpacing: 2))),
+            ),
+            _drawerItem(Icons.card_membership, "Membership Status", "Gold Tier"),
+            _drawerItem(Icons.confirmation_number_outlined, "My Coupons", "4 Active"),
+            _drawerItem(Icons.stars_rounded, "Reward Points", "1,250 pts"),
+            const Divider(color: Colors.white10),
+            _drawerItem(Icons.history, "My Orders", null),
+            _drawerItem(Icons.favorite_border, "Saved Carts", null),
+            const Spacer(),
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, minimumSize: const Size(double.infinity, 50)),
+                onPressed: () {},
+                child: const Text("BECOME A VENDOR", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+              ),
+            ),
+            const Text("v1.0.0 - KGF Edition", style: TextStyle(color: Colors.white24, fontSize: 10)),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+      body: Stack(
+        children: [
+          // MAP BACKGROUND
+          Container(color: const Color(0xFF121212), child: const Center(child: Text("KGF MAP REFERENCE", style: TextStyle(color: Colors.white10)))),
+          
+          // TOP UI
+          SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(icon: const Icon(Icons.menu, color: Colors.white), onPressed: () => scaffoldKey.currentState?.openDrawer()),
+                      const Text("PALS", style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 20)),
+                      IconButton(icon: const Icon(Icons.more_vert, color: Colors.white), onPressed: () {}),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ElevatedButton.icon(
+                  onPressed: () {},
+                  icon: const Icon(Icons.format_list_bulleted, size: 18),
+                  label: const Text("VIEW AS LIST", style: TextStyle(fontSize: 12)),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.white.withOpacity(0.1), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+                ),
+              ],
+            ),
+          ),
+
+         // --- THE NEW UTILITY CLUSTER (Bottom-Left) ---
+        Positioned(
+          bottom: 30,
+          left: 20,
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(icon: const Icon(Icons.menu, color: Colors.white), onPressed: () {}),
-                    const Text("PALS", style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 20)),
-                    IconButton(icon: const Icon(Icons.more_vert, color: Colors.white), onPressed: () {}),
-                  ],
+              // 1. FILTER (Top of the Recenter)
+              GestureDetector(
+                onTap: () => print("Filter Tapped"),
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.6),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.orange.withOpacity(0.5)),
+                  ),
+                  child: const Icon(Icons.tune_rounded, color: Colors.orange, size: 28),
                 ),
               ),
-              const SizedBox(height: 8),
-              // LIST VIEW BUTTON (Center Top)
-              ElevatedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.list, size: 18),
-                label: const Text("VIEW AS LIST", style: TextStyle(fontSize: 12)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white.withOpacity(0.1),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                ),
+              const SizedBox(height: 15), // Space between Filter and Recenter
+              
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  // 2. RECENTER BUTTON (The Anchor)
+                  GestureDetector(
+                    onTap: () => print("Recenter Tapped"),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: const BoxDecoration(
+                        color: Colors.orange,
+                        shape: BoxShape.circle,
+                        boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10)],
+                      ),
+                      child: const Icon(Icons.my_location, color: Colors.black, size: 28),
+                    ),
+                  ),
+                  const SizedBox(width: 15), // Space between Recenter and Fav
+                  
+                  // 3. FAVORITE (To the right of Recenter)
+                  GestureDetector(
+                    onTap: () => print("Finger Heart Tapped"),
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.6),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white10),
+                      ),
+                      child: const Text("🫰", style: TextStyle(fontSize: 24)),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ),
 
-        // BOTTOM UI: Fav (Left) and Filter (Right)
-        Positioned(bottom: 30, left: 20, child: FloatingActionButton.small(backgroundColor: Colors.white10, onPressed: () {}, child: const Icon(Icons.favorite, color: Colors.red))),
-        Positioned(bottom: 30, right: 20, child: FloatingActionButton(backgroundColor: Colors.orange, onPressed: () {}, child: const Icon(Icons.tune, color: Colors.black))),
-      ],
+  Widget _drawerItem(IconData icon, String title, String? trailing) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.white70, size: 20),
+      title: Text(title, style: const TextStyle(color: Colors.white, fontSize: 14)),
+      trailing: trailing != null ? Text(trailing, style: const TextStyle(color: Colors.orange, fontSize: 12)) : null,
+      onTap: () {},
     );
   }
 }
